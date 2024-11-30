@@ -2,7 +2,7 @@ import functools
 import time
 import logging
 
-from exceptions import MaxRetryError
+from weather_api.tasks.exceptions import MaxRetryError
 
 logger = logging.getLogger("data_collector")
 
