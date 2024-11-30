@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: weather_collector
-    command: celery -A weather_analyzer worker --loglevel=info --queues=collector_queue
+    command: celery -A weather_analyzer worker --loglevel=info --queues=collector_queue --concurrency=4
     env_file:
       - .env
     depends_on:
@@ -37,7 +37,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: weather_processor
-    command: celery -A weather_analyzer worker --loglevel=info --queues=processor_queue
+    command: celery -A weather_analyzer worker --loglevel=info --queues=processor_queue --concurrency=4
     env_file:
       - .env
     depends_on:
@@ -51,7 +51,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: celery-beat
-    command: celery -A weather_analyzer beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: celery -A weather_analyzer beat --loglevel=info
     env_file:
       - .env
     depends_on:
