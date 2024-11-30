@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 import requests
 
-from exceptions import WeatherStackAPIError
-from decorators import retry
+from weather_api.tasks.exceptions import WeatherStackAPIError
+from weather_api.tasks.decorators import retry
 
 
 logger = logging.getLogger("data_collector")
@@ -36,13 +36,12 @@ class WeatherStackWrapper:
                 response = requests.get(
                     f"{self._base_url}/history/daily", params=params
                 )
-                if response.status_code != 200:
-                    logger.error(
-                        f"Failed to fetch data for {city}: {response.status_code}, {response.text}"
-                    )
+
+                # The API returns with 200 without api key
+                if "error" in response.text:
                     raise WeatherStackAPIError(response.text)
 
-                responses.append(response)
+                responses.append(response.json())
 
             logger.info("Done!")
             return responses
