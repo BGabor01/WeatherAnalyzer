@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "weather_api",
     "django_celery_beat",
     "celery",
+    "rest_framework",
+    "django_filters",
 ]
 
 MIDDLEWARE = [
@@ -159,7 +161,7 @@ CELERY_TASK_ROUTING = {
 CELERY_BEAT_SCHEDULE = {
     "collect_weather_data_every_7_days": {
         "task": "weather_api.tasks.collect_data.collect_weather_data_task",
-        "schedule": crontab(minute="*"),
+        "schedule": crontab(minute="*/5"),
     },
 }
 
