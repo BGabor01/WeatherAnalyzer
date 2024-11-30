@@ -189,7 +189,7 @@ LOGGING = {
             "formatter": "verbose",
         },
         "collector_file": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "filename": os.path.join(LOG_DIR, "collector_.log"),
             "formatter": "verbose",
