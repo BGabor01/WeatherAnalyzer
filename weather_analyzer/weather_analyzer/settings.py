@@ -82,13 +82,23 @@ WSGI_APPLICATION = "weather_analyzer.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_DB"),
+        "NAME": "weather",
         "USER": os.environ.get("POSTGRES_USER"),
         "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-        "HOST": "postgres",
-        "PORT": "5432",
-    }
+        "HOST": "pgbouncer",
+        "PORT": "6432",
+    },
+    "replica": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "weather-ro",
+        "USER": os.environ.get("POSTGRES_USER"),
+        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "HOST": "pgbouncer",
+        "PORT": "6432",
+    },
 }
+
+DATABASE_ROUTERS = ["weather_api.db_router.DatabaseRouter"]
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -135,16 +145,21 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 
+CELERY_IMPORTS = ("weather_api.tasks",)
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_TASK_QUEUES = {
     "collector_queue": {"exchange": "collector", "binding_key": "collector"},
     "processor_queue": {"exchange": "processor", "binding_key": "processor"},
 }
-
+CELERY_TASK_ROUTING = {
+    "weather_api.tasks.collect_data.collect_weather_data_task": {
+        "queue": "collector_queue"
+    },
+}
 CELERY_BEAT_SCHEDULE = {
     "collect_weather_data_every_7_days": {
         "task": "weather_api.tasks.collect_data.collect_weather_data_task",
-        "schedule": crontab(minute="0", hour="0", day_of_week="monday"),
+        "schedule": crontab(minute="*"),
     },
 }
 
