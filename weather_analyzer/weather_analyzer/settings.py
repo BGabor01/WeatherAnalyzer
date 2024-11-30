@@ -137,3 +137,44 @@ CELERY_TASK_QUEUES = {
     "collector_queue": {"exchange": "collector", "binding_key": "collector"},
     "processor_queue": {"exchange": "processor", "binding_key": "processor"},
 }
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",
+        },
+        "django_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/django_.log"),
+            "formatter": "verbose",
+        },
+        "collector_file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "logs/collector_.log"),
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "django_file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+        "data_collector": {
+            "handlers": ["collector_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
