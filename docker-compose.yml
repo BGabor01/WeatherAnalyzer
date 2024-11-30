@@ -1,9 +1,9 @@
 services:
   weather_api:
+      container_name: weather_api
       build:
         context: .
         dockerfile: Dockerfile
-      container_name: weather_api
       command: ["./entrypoint.sh"]
       environment:
         - SECRET_KEY=${SECRET_KEY}
@@ -18,14 +18,17 @@ services:
           condition: service_started
       networks:
       - app-network
+
+
   weather_collector:
+    container_name: weather_collector
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: weather_collector
     command: celery -A weather_analyzer worker --loglevel=info --queues=collector_queue --concurrency=4
     environment:
         - SECRET_KEY=${SECRET_KEY}
+        - API_KEY=${API_KEY}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_USER=${POSTGRES_USER}
     depends_on:
@@ -33,11 +36,13 @@ services:
       - weather_api
     networks:
       - app-network
+
+
   weather_processor:
+    container_name: weather_processor
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: weather_processor
     command: celery -A weather_analyzer worker --loglevel=info --queues=processor_queue --concurrency=4
     environment:
         - SECRET_KEY=${SECRET_KEY}
@@ -50,10 +55,10 @@ services:
       - app-network
 
   celery-beat:
+    container_name: celery-beat
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: celery-beat
     command: celery -A weather_analyzer beat --loglevel=info
     env_file:
       - .env
@@ -64,8 +69,8 @@ services:
       - app-network
 
   redis:
-    image: redis:7
     container_name: redis
+    image: redis:7
     ports:
       - "6379:6379"
     networks:
@@ -73,6 +78,7 @@ services:
     restart: always
       
   postgres-primary:
+    container_name: postgres-primary
     image: bitnami/postgresql:15
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -108,7 +114,10 @@ services:
       - POSTGRESQL_MASTER_PORT_NUMBER=${POSTGRESQL_MASTER_PORT_NUMBER}
     networks:
       - app-network
+
+  
   pgbouncer:
+    container_name: pgbouncer
     image: docker.io/bitnami/pgbouncer:1
     ports:
       - "5432:6432"
