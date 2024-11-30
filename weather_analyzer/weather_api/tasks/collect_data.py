@@ -10,7 +10,9 @@ from weather_api.models import City, WeatherData
 logger = logging.getLogger("data_collector")
 
 
-def get_city_data(data: Dict[str, Union[str, int]]) -> Dict[str, Union[str, int]]:
+def get_city_data(
+    data: Dict[str, Union[str, int, float]]
+) -> Dict[str, Union[str, int, float]]:
     return {
         "city_id": data["city_id"],
         "name": data["city_name"],
@@ -23,7 +25,7 @@ def get_city_data(data: Dict[str, Union[str, int]]) -> Dict[str, Union[str, int]
     }
 
 
-def create_weather_details(weather, city: City):
+def create_weather_details(weather, city: City) -> Dict[str, Union[str, int, float]]:
     return {
         "city": city,
         "date": parse_datetime(weather["datetime"]).date(),
@@ -45,7 +47,7 @@ def create_weather_details(weather, city: City):
 
 
 @shared_task(queue="collector_queue")
-def collect_weather_data_task():
+def collect_weather_data_task() -> None:
     wrapper = WeatherStackWrapper(api_key=os.environ.get("API_KEY"))
     weather_data = wrapper.get_last_week_weather()
 
