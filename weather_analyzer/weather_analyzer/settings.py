@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "weather_api",
-    "weather_collector",
-    "weather_processor",
+    "django_celery_beat",
+    "celery",
 ]
 
 MIDDLEWARE = [
