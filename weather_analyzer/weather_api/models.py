@@ -50,13 +50,11 @@ class WeeklyWeatherStatistics(models.Model):
     )
     week_start_date = models.DateField(db_index=True)
     avg_temperature = models.FloatField()
-    avg_max_wind_speed = models.FloatField()
-    avg_precipitation = models.FloatField()
+    avg_wind_speed = models.FloatField()
     total_snowfall = models.FloatField()
     avg_cloud_cover = models.FloatField()
     avg_uv_index = models.FloatField()
-    avg_min_relative_humidity = models.FloatField()
-    avg_max_relative_humidity = models.FloatField()
+    avg_week_relative_humidity = models.FloatField()
 
     class Meta:
         indexes = [
