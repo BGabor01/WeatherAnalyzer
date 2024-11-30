@@ -2,7 +2,7 @@ from django.db import models
 
 
 class City(models.Model):
-    city_id = models.CharField(max_length=255, unique=True)
+    id = models.CharField(max_length=255, primary_key=True)
     name = models.CharField(max_length=255, db_index=True)
     country_code = models.CharField(max_length=2, db_index=True)
     state_code = models.CharField(max_length=2)
