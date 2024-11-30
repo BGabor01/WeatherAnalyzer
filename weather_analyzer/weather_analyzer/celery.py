@@ -8,4 +8,4 @@ app = Celery("weather_analyzer")
 
 app.config_from_object("django.conf:settings", namespace="CELERY")
 
-app.autodiscover_tasks()
+app.autodiscover_tasks(["weather_api.tasks"])
