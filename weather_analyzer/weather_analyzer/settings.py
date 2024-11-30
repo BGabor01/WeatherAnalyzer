@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -129,6 +131,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 
@@ -137,6 +140,16 @@ CELERY_TASK_QUEUES = {
     "collector_queue": {"exchange": "collector", "binding_key": "collector"},
     "processor_queue": {"exchange": "processor", "binding_key": "processor"},
 }
+
+CELERY_BEAT_SCHEDULE = {
+    "collect_weather_data_every_7_days": {
+        "task": "weather_api.tasks.collect_data.collect_weather_data_task",
+        "schedule": crontab(minute="0", hour="0", day_of_week="monday"),
+    },
+}
+
+LOG_DIR = Path(os.path.join(BASE_DIR, "logs"))
+LOG_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
     "version": 1,
@@ -155,13 +168,13 @@ LOGGING = {
         "django_file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/django_.log"),
+            "filename": os.path.join(LOG_DIR, "django_.log"),
             "formatter": "verbose",
         },
         "collector_file": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "logs/collector_.log"),
+            "filename": os.path.join(LOG_DIR, "collector_.log"),
             "formatter": "verbose",
         },
     },
