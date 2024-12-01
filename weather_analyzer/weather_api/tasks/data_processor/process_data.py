@@ -21,38 +21,6 @@ def get_week_dates() -> Tuple[date, date]:
     return week_start_date, today
 
 
-def wait_for_replica_sync(timeout=5, poll_interval=0.1):
-    start_time = time.time()
-
-    while time.time() - start_time < timeout:
-        try:
-            with connections["default"].cursor() as primary_cursor, connections[
-                "replica"
-            ].cursor() as replica_cursor:
-                primary_cursor.execute("SELECT pg_current_wal_lsn();")
-                primary_lsn = primary_cursor.fetchone()[0]
-
-                replica_cursor.execute("SELECT pg_last_wal_replay_lsn();")
-                replica_lsn = replica_cursor.fetchone()[0]
-
-                if primary_lsn == replica_lsn:
-                    logger.info(
-                        "Replica is fully synchronized with the primary database."
-                    )
-                    return
-                else:
-                    logger.warning(
-                        f"Replica is out of sync with the primary database. Sync mismatch detected. Wait {poll_interval} seconds."
-                    )
-
-        except Exception as e:
-            raise RuntimeError(f"Error while checking replica sync: {e}")
-
-        time.sleep(poll_interval)
-
-    raise TimeoutError(f"Replica did not sync within {timeout} seconds.")
-
-
 def create_weekly_statistics(
     city_id: int, week_start_date: datetime, data: Dict[str, float]
 ) -> WeeklyWeatherStatistics:
@@ -86,7 +54,6 @@ def calculate_weekly_statistics_for_city(
 
 @shared_task(queue="processor_queue", name="calculate_weekly_statistics_task")
 def calculate_weekly_statistics_task() -> None:
-    wait_for_replica_sync()
     week_start_date, today = get_week_dates()
 
     aggregated_data = (
