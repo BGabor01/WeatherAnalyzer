@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import City, WeatherData
+from .models import City, WeatherData, WeeklyWeatherStatistics
 
 
 class CitySerializer(serializers.ModelSerializer):
@@ -11,4 +11,10 @@ class CitySerializer(serializers.ModelSerializer):
 class HistoricalDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = WeatherData
+        fields = "__all__"
+
+
+class WeeklyStatisticsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WeeklyWeatherStatistics
         fields = "__all__"
