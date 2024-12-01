@@ -69,10 +69,11 @@ def calculate_weekly_statistics_task() -> None:
         )
     )
 
+    weekly_stats = []
     for data in aggregated_data:
         city_id = data["city_id"]
-        calculate_weekly_statistics_for_city.apply_async(
-            (city_id, week_start_date, data)
-        )
+        weekly_stat = create_weekly_statistics(city_id, week_start_date, data)
+        weekly_stats.append(weekly_stat)
 
-    logger.info("All weekly statistics calculations have been queued.")
+    with transaction.atomic():
+        WeeklyWeatherStatistics.objects.bulk_create(weekly_stats)
