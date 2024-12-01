@@ -30,7 +30,9 @@ def get_city_data(
     }
 
 
-def create_weather_details(weather, city: City) -> Dict[str, Union[str, int, float]]:
+def create_weather_details(
+    weather: Dict[str, Union[str, int, float]], city: City
+) -> Dict[str, Union[str, int, float]]:
     return {
         "city": city,
         "date": parse_datetime(weather["datetime"]).date(),
@@ -51,6 +53,44 @@ def create_weather_details(weather, city: City) -> Dict[str, Union[str, int, flo
     }
 
 
+def get_or_create_city(city_data: Dict[str, Union[str, int, float]]) -> City:
+    city_id = city_data.pop("city_id")
+    city, _ = City.objects.get_or_create(id=int(city_id), defaults=city_data)
+    return city
+
+
+def create_weather_data_instances(
+    weather_data_by_city: Dict[str, Union[str, int, float]], city: City
+) -> list:
+    weather_detail_instances = []
+    for weather_details in weather_data_by_city["data"]:
+        weather_detail_instances.append(
+            WeatherData(**create_weather_details(weather_details, city))
+        )
+    return weather_detail_instances
+
+
+def bulk_create_weather_data(weather_detail_instances: list) -> None:
+    if weather_detail_instances:
+        with transaction.atomic():
+            WeatherData.objects.bulk_create(
+                weather_detail_instances, ignore_conflicts=True
+            )
+        logger.info(
+            f"{len(weather_detail_instances)} WeatherData objects created successfully."
+        )
+
+
+def notify_processor_worker() -> None:
+    handler = RabbitMqHandler(queue_name="processor_queue")
+    handler.publish(
+        "calculate_weekly_statistics_task",
+        ExchangesEnum.PROCESSOR_E.value,
+        RoutingKeysEnum.PROCESSOR_RK.value,
+    )
+    handler.close()
+
+
 @shared_task(
     queue="collector_queue",
     name="collect_weather_data_task",
@@ -62,24 +102,11 @@ def collect_weather_data_task() -> None:
 
     for weather_data_by_city in weather_data:
         city_data = get_city_data(weather_data_by_city)
-        city_id = city_data.pop("city_id")
-        city, _ = City.objects.get_or_create(id=int(city_id), defaults=city_data)
-        weather_detail_instances = [
-            WeatherData(**create_weather_details(weather_details, city))
-            for weather_details in weather_data_by_city["data"]
-        ]
-        logger.info(
-            f"WeatherData objects created for city_id: {city_id}, city_name: {city.name}"
+        city = get_or_create_city(city_data)
+        weather_detail_instances = create_weather_data_instances(
+            weather_data_by_city, city
         )
-        with transaction.atomic():
-            WeatherData.objects.bulk_create(weather_detail_instances)
+        bulk_create_weather_data(weather_detail_instances)
 
     logger.info("Data collection completed successfully. Notifying processor worker!")
-
-    handler = RabbitMqHandler(queue_name="processor_queue")
-    handler.publish(
-        "calculate_weekly_statistics_task",
-        ExchangesEnum.PROCESSOR_E.value,
-        RoutingKeysEnum.PROCESSOR_RK.value,
-    )
-    handler.close()
+    notify_processor_worker()
