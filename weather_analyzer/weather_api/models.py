@@ -39,6 +39,9 @@ class WeatherData(models.Model):
         indexes = [
             models.Index(fields=["city", "date"]),
         ]
+        constraints = [
+            models.UniqueConstraint(fields=["city", "date"], name="unique_city_date")
+        ]
 
     def __str__(self):
         return f"Weather data for {self.city.name} on {self.date}"
