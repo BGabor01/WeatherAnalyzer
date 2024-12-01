@@ -4,8 +4,11 @@ from celery import shared_task
 from django.utils.dateparse import parse_datetime
 import logging
 
-from .wrappers import WeatherStackWrapper
 from weather_api.models import City, WeatherData
+from .wrappers import WeatherStackWrapper
+from .rabbit_mq_handler import RabbitMqHandler
+from .enums import RoutingKeysEnum, ExchangesEnum
+
 
 logger = logging.getLogger("data_collector")
 
@@ -46,7 +49,10 @@ def create_weather_details(weather, city: City) -> Dict[str, Union[str, int, flo
     }
 
 
-@shared_task(queue="collector_queue")
+@shared_task(
+    queue="collector_queue",
+    name="collect_weather_data_task",
+)
 def collect_weather_data_task() -> None:
     wrapper = WeatherStackWrapper(api_key=os.environ.get("API_KEY"))
     weather_data = wrapper.get_last_week_weather()
@@ -60,3 +66,10 @@ def collect_weather_data_task() -> None:
             for weather_details in weather_data_by_city["data"]
         ]
         WeatherData.objects.bulk_create(weather_detail_instances)
+
+    handler = RabbitMqHandler(queue_name="processor_queue")
+    handler.publish(
+        "calculate_weekly_statistics_task",
+        ExchangesEnum.PROCESSOR_E.value,
+        RoutingKeysEnum.PROCESSOR_RK.value,
+    )

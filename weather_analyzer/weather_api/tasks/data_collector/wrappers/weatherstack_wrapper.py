@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 
 import requests
 
-from weather_api.tasks.exceptions import WeatherStackAPIError
-from weather_api.tasks.decorators import retry
+from weather_api.tasks.data_collector.exceptions import WeatherStackAPIError
+from weather_api.tasks.data_collector.decorators import retry
 
 
 logger = logging.getLogger("data_collector")
