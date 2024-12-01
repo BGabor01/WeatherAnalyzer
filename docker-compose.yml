@@ -9,6 +9,8 @@ services:
         - SECRET_KEY=${SECRET_KEY}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_USER=${POSTGRES_USER}
+        - RABBITMQ_USER=${RABBITMQ_USER}
+        - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       ports:
         - "8000:8000"
       depends_on:
@@ -32,6 +34,8 @@ services:
         - API_KEY=${API_KEY}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_USER=${POSTGRES_USER}
+        - RABBITMQ_USER=${RABBITMQ_USER}
+        - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -54,6 +58,8 @@ services:
         - SECRET_KEY=${SECRET_KEY}
         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
         - POSTGRES_USER=${POSTGRES_USER}
+        - RABBITMQ_USER=${RABBITMQ_USER}
+        - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
     depends_on:
       rabbitmq:
         condition: service_healthy
