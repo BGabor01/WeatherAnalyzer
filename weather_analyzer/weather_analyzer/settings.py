@@ -28,7 +28,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost"]
 
 
 # Application definition
@@ -144,24 +144,35 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_BROKER_URL = f"pyamqp://{os.environ.get("RABBITMQ_USER")}:{os.environ.get("RABBITMQ_PASSWORD")}@rabbitmq//"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+CELERY_ACCEPT_CONTENT = ["application/json"]
 
 CELERY_IMPORTS = ("weather_api.tasks",)
 CELERY_TASK_DEFAULT_QUEUE = "default"
+
 CELERY_TASK_QUEUES = {
-    "collector_queue": {"exchange": "collector", "binding_key": "collector"},
-    "processor_queue": {"exchange": "processor", "binding_key": "processor"},
+    "collector_queue": {
+        "exchange": "collector",
+        "routing_key": "collector",
+    },
+    "processor_queue": {
+        "exchange": "processor",
+        "routing_key": "processor",
+    },
 }
 CELERY_TASK_ROUTING = {
-    "weather_api.tasks.collect_data.collect_weather_data_task": {
-        "queue": "collector_queue"
+    "collect_weather_data_task": {
+        "queue": "collector_queue",
+    },
+    "calculate_weekly_statistics_task": {
+        "queue": "processor_queue",
     },
 }
 CELERY_BEAT_SCHEDULE = {
     "collect_weather_data_every_7_days": {
-        "task": "weather_api.tasks.collect_data.collect_weather_data_task",
-        "schedule": crontab(minute="*/5"),
+        "task": "collect_weather_data_task",
+        "schedule": crontab(hour=0, minute=0, day_of_week=1),
     },
 }
 
@@ -194,6 +205,12 @@ LOGGING = {
             "filename": os.path.join(LOG_DIR, "collector_.log"),
             "formatter": "verbose",
         },
+        "processor_file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(LOG_DIR, "processor_.log"),
+            "formatter": "verbose",
+        },
     },
     "loggers": {
         "django": {
@@ -203,6 +220,11 @@ LOGGING = {
         },
         "data_collector": {
             "handlers": ["collector_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "data_processor": {
+            "handlers": ["processor_file"],
             "level": "INFO",
             "propagate": False,
         },
