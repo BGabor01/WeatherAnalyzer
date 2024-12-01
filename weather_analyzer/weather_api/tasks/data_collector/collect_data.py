@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime, timedelta
 from typing import Dict, Union
 
 from celery import shared_task
@@ -95,10 +96,13 @@ def notify_processor_worker() -> None:
     queue="collector_queue",
     name="collect_weather_data_task",
 )
-def collect_weather_data_task() -> None:
+def collect_weather_data_task(
+    date_from: datetime = datetime.today() - timedelta(days=7),
+    date_to: datetime = datetime.today(),
+) -> None:
     logger.info("Collect weather data task started!")
     wrapper = WeatherStackWrapper(api_key=os.environ.get("API_KEY"))
-    weather_data = wrapper.get_last_week_weather()
+    weather_data = wrapper.get_historical_weather(date_from=date_from, date_to=date_to)
 
     for weather_data_by_city in weather_data:
         city_data = get_city_data(weather_data_by_city)
