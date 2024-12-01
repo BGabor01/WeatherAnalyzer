@@ -68,6 +68,22 @@ def create_weekly_statistics(
     )
 
 
+@shared_task(queue="processor_queue", name="calculate_weekly_statistics_for_city")
+def calculate_weekly_statistics_for_city(
+    city_id: int, week_start_date: datetime, data: Dict[str, float]
+) -> None:
+    try:
+        weekly_stat = create_weekly_statistics(city_id, week_start_date, data)
+        with transaction.atomic(using="default"):
+            WeeklyWeatherStatistics.objects.bulk_create([weekly_stat])
+
+        logger.info(f"Weekly statistics created for city {city_id}.")
+
+    except Exception as e:
+        logger.error(f"Error processing city {city_id}: {e}")
+        raise
+
+
 @shared_task(queue="processor_queue", name="calculate_weekly_statistics_task")
 def calculate_weekly_statistics_task() -> None:
     wait_for_replica_sync()
@@ -86,11 +102,10 @@ def calculate_weekly_statistics_task() -> None:
         )
     )
 
-    weekly_stats = []
     for data in aggregated_data:
         city_id = data["city_id"]
-        weekly_stat = create_weekly_statistics(city_id, week_start_date, data)
-        weekly_stats.append(weekly_stat)
+        calculate_weekly_statistics_for_city.apply_async(
+            (city_id, week_start_date, data)
+        )
 
-    with transaction.atomic():
-        WeeklyWeatherStatistics.objects.bulk_create(weekly_stats)
+    logger.info("All weekly statistics calculations have been queued.")
