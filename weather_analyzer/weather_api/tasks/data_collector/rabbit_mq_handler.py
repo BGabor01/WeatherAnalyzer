@@ -63,6 +63,15 @@ class RabbitMqHandler:
             ),
         )
 
+        logger.info(
+            f"Message published to {self.queue_name} queue with task: {task_name}!"
+        )
+
+    def close(self) -> None:
+        if self.connection.is_open:
+            logger.info("Closing connection!")
+            self.connection.close()
+
     @staticmethod
     def create_ids() -> Tuple[uuid.UUID, uuid.UUID, uuid.UUID, uuid.UUID]:
         return tuple(uuid.uuid4() for _ in range(4))
