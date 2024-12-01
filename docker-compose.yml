@@ -135,6 +135,8 @@ services:
       - POSTGRESQL_MASTER_HOST=${POSTGRESQL_MASTER_HOST}
       - POSTGRESQL_MASTER_PORT_NUMBER=${POSTGRESQL_MASTER_PORT_NUMBER}
     restart: always
+    volumes:
+    - postgres-data:/bitnami/postgresql
     networks:
       - app-network
 
@@ -178,6 +180,10 @@ services:
     networks:
       - app-network
 
+volumes:
+  postgres-data:
+    driver: local
+    
 networks:
   app-network:
     driver: bridge
