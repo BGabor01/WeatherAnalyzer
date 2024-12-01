@@ -144,7 +144,8 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_BROKER_URL = f"pyamqp://{os.environ.get("RABBITMQ_USER")}:{os.environ.get("RABBITMQ_PASSWORD")}@rabbitmq//"
+
+CELERY_BROKER_URL = f"pyamqp://{os.environ.get('RABBITMQ_USER')}:{os.environ.get('RABBITMQ_PASSWORD')}@rabbitmq//"
 CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 
