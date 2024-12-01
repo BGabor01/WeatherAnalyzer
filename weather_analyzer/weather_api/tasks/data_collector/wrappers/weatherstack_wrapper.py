@@ -17,7 +17,7 @@ class WeatherStackWrapper:
         self._base_url = "https://api.weatherbit.io/v2.0"
 
     @retry(exceptions=(WeatherStackAPIError,))
-    def get_last_week_weather(
+    def get_historical_weather(
         self,
         cities: Optional[List[str]] = ["New York,NY", "Los Angeles,CA"],
         date_from: datetime = datetime.today() - timedelta(days=7),
