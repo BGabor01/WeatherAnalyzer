@@ -13,7 +13,17 @@ logger = logging.getLogger(__name__)
 
 class RabbitMqHandler:
     def __init__(self, queue_name: str) -> None:
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters("rabbitmq"))
+        self.credentials = (
+            pika.PlainCredentials(
+                os.environ.get("RABBITMQ_USER"),
+                os.environ.get("RABBITMQ_PASSWORD"),
+            ),
+        )
+
+        self.connection = pika.BlockingConnection(
+            pika.ConnectionParameters("rabbitmq", credentials=self.credentials[0])
+        )
+
         self.channel = self.connection.channel()
         self.queue_name = queue_name
         self.channel.queue_declare(queue=self.queue_name, durable=True)
